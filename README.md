@@ -2,6 +2,10 @@
 
 A comprehensive GraphRAG (Graph Retrieval-Augmented Generation) system that extracts knowledge from research papers, builds a knowledge graph in Neo4j, and exposes it through a REST API for semantic search and exploration.
 
+## 🎥 Video Demonstration
+
+Watch the running implementation: [YouTube Video](https://youtu.be/utOL2YcOrVs)
+
 ## 📋 Table of Contents
 
 - [Overview](#overview)
