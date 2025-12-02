@@ -1,0 +1,60 @@
+# Dockerfile for Flink GraphRAG Job
+# This builds a container that works with Flink Kubernetes Operator
+# The operator manages the Flink cluster, we just provide the JAR
+
+FROM eclipse-temurin:17-jdk AS builder
+
+WORKDIR /app
+
+# Install SBT using official method
+RUN apt-get update && \
+    apt-get install -y curl gnupg2 && \
+    echo "deb https://repo.scala-sbt.org/scalasbt/debian all main" | tee /etc/apt/sources.list.d/sbt.list && \
+    echo "deb https://repo.scala-sbt.org/scalasbt/debian /" | tee /etc/apt/sources.list.d/sbt_old.list && \
+    curl -sL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x2EE0EA64E40A89B84B2DF73499E82A75642AC823" | apt-key add && \
+    apt-get update && \
+    apt-get install -y sbt=1.9.9 && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy project files
+COPY build.sbt project/ ./
+COPY project/ ./project/
+COPY src/ ./src/
+
+# Build JAR
+RUN sbt assembly
+
+# Runtime stage - Use Flink base image (1.20 to match friend's working setup)
+FROM flink:1.20-scala_2.12-java17
+
+WORKDIR /app
+
+# Copy JAR from builder to Flink's userlib directory
+# Flink operator expects JARs in /opt/flink/usrlib/
+COPY --from=builder /app/target/scala-2.12/cs441-hw3-graphrag-assembly-0.1.0-SNAPSHOT.jar /opt/flink/usrlib/graphrag-job.jar
+
+# Install S3 filesystem plugin for Flink (required for S3 access)
+# Flink 1.20 uses flink-s3-fs-presto by default
+RUN mkdir -p /opt/flink/plugins/s3-fs-presto && \
+    cp /opt/flink/opt/flink-s3-fs-presto-*.jar /opt/flink/plugins/s3-fs-presto/ 2>/dev/null || \
+    (echo "S3 plugin not found in opt/, downloading..." && \
+     curl -L https://repo.maven.apache.org/maven2/org/apache/flink/flink-s3-fs-presto/1.20.3/flink-s3-fs-presto-1.20.3.jar -o /opt/flink/plugins/s3-fs-presto/flink-s3-fs-presto-1.20.3.jar)
+
+# Install AWS CLI for S3 access (if needed)
+RUN apt-get update && \
+    apt-get install -y curl unzip && \
+    curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
+    unzip awscliv2.zip && \
+    ./aws/install && \
+    rm -rf awscliv2.zip aws && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Set environment variables
+ENV JAVA_OPTS="-Xmx2048m -Xms1024m"
+ENV FLINK_HOME="/opt/flink"
+ENV PATH="${FLINK_HOME}/bin:${PATH}"
+
+# Note: No ENTRYPOINT override needed - Flink operator will manage the cluster
+# The operator handles the read-only ConfigMap issue by using proper volume mounts

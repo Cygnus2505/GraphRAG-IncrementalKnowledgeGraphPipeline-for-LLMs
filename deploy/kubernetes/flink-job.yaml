@@ -1,0 +1,67 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: graphrag-flink-job
+  namespace: flink
+spec:
+  template:
+    metadata:
+      labels:
+        app: graphrag-flink
+    spec:
+      restartPolicy: Never
+      serviceAccountName: flink
+      containers:
+      - name: flink-job
+        image: <YOUR_ECR_REPO>/graphrag-flink:latest
+        command: ["java"]
+        args:
+          - "-Xmx2048m"
+          - "-Xms1024m"
+          - "-cp"
+          - "/app/graphrag-job.jar"
+          - "graphrag.GraphRagJob"
+          - "--input"
+          - "s3://<YOUR_S3_BUCKET>/chunks/"
+        env:
+        - name: NEO4J_URI
+          valueFrom:
+            configMapKeyRef:
+              name: graphrag-config
+              key: neo4j.uri
+        - name: NEO4J_PASS
+          valueFrom:
+            secretKeyRef:
+              name: neo4j-credentials
+              key: password
+        - name: NEO4J_USER
+          valueFrom:
+            configMapKeyRef:
+              name: graphrag-config
+              key: neo4j.user
+        - name: NEO4J_DATABASE
+          valueFrom:
+            configMapKeyRef:
+              name: graphrag-config
+              key: neo4j.database
+        - name: AWS_REGION
+          value: "us-east-1"
+        - name: AWS_DEFAULT_REGION
+          value: "us-east-1"
+        - name: AWS_REGION
+          value: "us-east-1"
+        - name: AWS_DEFAULT_REGION
+          value: "us-east-1"
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "1000m"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
+      # IAM role for S3 access (IRSA)
+      # serviceAccount:
+      #   annotations:
+      #     eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT:role/FlinkS3Role
+  backoffLimit: 3
+

@@ -1,0 +1,54 @@
+# SBT
+target/
+project/target/
+project/project/
+
+# IDE
+.idea/
+.bsp/
+*.iml
+.metals/
+.vscode/
+
+# Scala
+*.class
+*.log
+
+# Output
+data/
+output/
+*.jsonl
+
+# OS
+.DS_Store
+Thumbs.db
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

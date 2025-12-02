@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: graphrag-api
+  namespace: graphrag
+  labels:
+    app: graphrag-api
+    component: rest-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: graphrag-api
+  template:
+    metadata:
+      labels:
+        app: graphrag-api
+        component: rest-api
+    spec:
+      containers:
+      - name: api-server
+        image: <YOUR_ECR_REPO>/graphrag-api:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        env:
+        - name: NEO4J_URI
+          valueFrom:
+            configMapKeyRef:
+              name: graphrag-config
+              key: neo4j.uri
+        - name: NEO4J_PASS
+          valueFrom:
+            secretKeyRef:
+              name: neo4j-credentials
+              key: password
+        - name: NEO4J_USER
+          valueFrom:
+            configMapKeyRef:
+              name: graphrag-config
+              key: neo4j.user
+        - name: NEO4J_DATABASE
+          valueFrom:
+            configMapKeyRef:
+              name: graphrag-config
+              key: neo4j.database
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+      restartPolicy: Always
+
+
+
+
+
+

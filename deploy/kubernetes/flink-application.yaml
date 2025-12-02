@@ -1,0 +1,55 @@
+apiVersion: flink.apache.org/v1beta1
+kind: FlinkDeployment
+metadata:
+  name: graphrag-pipeline
+  namespace: flink
+spec:
+  image: <YOUR_ECR_REPO>/graphrag-flink-job:latest
+  flinkVersion: "1.17"
+  flinkConfiguration:
+    taskmanager.numberOfTaskSlots: "4"
+    parallelism.default: "4"
+    state.backend: "rocksdb"
+    state.checkpoints.dir: "s3://<YOUR_S3_BUCKET>/checkpoints"
+    state.savepoints.dir: "s3://<YOUR_S3_BUCKET>/savepoints"
+  serviceAccount: flink
+  jobManager:
+    resource:
+      memory: "2048m"
+      cpu: 1
+  taskManager:
+    resource:
+      memory: "4096m"
+      cpu: 2
+  job:
+    jarURI: "local:///opt/flink/usrlib/graphrag-job.jar"
+    entryClass: "graphrag.GraphRagJob"
+    args:
+      - "--input"
+      - "s3://<YOUR_S3_BUCKET>/chunks/"
+    parallelism: 4
+    upgradeMode: stateless
+  podTemplate:
+    apiVersion: v1
+    kind: Pod
+    spec:
+      serviceAccountName: flink
+      containers:
+      - name: flink-main-container
+        env:
+        - name: NEO4J_URI
+          value: "bolt://<NEO4J_HOST>:7687"
+        - name: NEO4J_PASS
+          valueFrom:
+            secretKeyRef:
+              name: neo4j-credentials
+              key: password
+        - name: AWS_REGION
+          value: "us-east-1"
+      # IAM role for S3 access (if using IRSA)
+      # serviceAccount:
+      #   annotations:
+      #     eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT:role/FlinkS3Role
+
+
+

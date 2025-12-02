@@ -1,0 +1,20 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Federated": "arn:aws:iam::405721655991:oidc-provider/oidc.eks.us-east-1.amazonaws.com/id/5568043DD93ED1FBBABE93DE3C3D0EA0"
+      },
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+          "oidc.eks.us-east-1.amazonaws.com/id/5568043DD93ED1FBBABE93DE3C3D0EA0:sub": "system:serviceaccount:flink:flink",
+          "oidc.eks.us-east-1.amazonaws.com/id/5568043DD93ED1FBBABE93DE3C3D0EA0:aud": "sts.amazonaws.com"
+        }
+      }
+    }
+  ]
+}
+
+

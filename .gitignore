@@ -1,0 +1,233 @@
+# SBT Build Artifacts
+target/
+project/target/
+project/project/target/
+*.class
+*.log
+*.jar
+!deploy/*.jar
+graphrag-job.jar
+
+# IDE - IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+.idea_modules/
+
+# IDE - VS Code
+.vscode/
+*.code-workspace
+
+# IDE - Eclipse
+.classpath
+.project
+.settings/
+bin/
+
+# IDE - NetBeans
+nbproject/
+build/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+
+# Scala
+*.class
+*.log
+.metals/
+.bloop/
+metals.sbt
+
+# SBT
+.sbt/
+.history/
+.cache/
+lib_managed/
+src_managed/
+project/boot/
+project/plugins/project/
+.sbtopts
+
+# Logs
+*.log
+logs/
+api-server*.log
+compile-output.log
+
+# OS Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# Windows
+*.lnk
+*.swp
+*.swo
+*~
+
+# Environment Variables & Secrets
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+*.p12
+secrets/
+credentials/
+
+# Application Configuration (if contains secrets)
+# Uncomment if you don't want to track config with passwords
+# src/main/resources/application.conf
+# deploy/application.conf
+
+# Neo4j Local Data
+neo4j-data/
+neo4j-logs/
+neo4j-import/
+.neo4j/
+
+# Flink Local Data
+flink-data/
+flink-logs/
+.flink/
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# Test Data & Temporary Files
+test-data/
+tmp/
+temp/
+*.tmp
+*.temp
+*.swp
+*.swo
+
+# Build Output
+dist/
+build/
+out/
+*.war
+*.ear
+
+# Coverage Reports
+coverage/
+.nyc_output/
+*.lcov
+
+# Package Files
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# Local Development
+local/
+local-*/
+*.local
+
+# Phase 1 Delta Export Build Artifacts
+phase1-delta-export/target/
+phase1-delta-export/project/target/
+phase1-delta-export/project/project/target/
+
+# AWS Credentials (if accidentally committed)
+.aws/
+aws-credentials
+*.pem
+
+# Kubernetes
+*.kubeconfig
+kubeconfig
+
+# Ollama
+.ollama/
+ollama-models/
+
+# Data Files (large files should not be in git)
+data/*.jsonl
+data/*.json
+data/*.parquet
+data/chunks/
+!data/.gitkeep
+
+# Keep empty data directory
+!data/
+!phase1-delta-export/data/
+
+# Generated Documentation (if any)
+docs/generated/
+
+# Backup Files
+*.bak
+*.backup
+*~
+
+# Jupyter Notebooks (if any)
+.ipynb_checkpoints/
+*.ipynb
+
+# Python (if any Python scripts)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# Node (if any Node.js scripts)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# MacOS
+.AppleDouble
+.LSOverride
+Icon
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+
+# JetBrains IDEs
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Temporary Scripts
+*-temp.ps1
+*-temp.sh
+*-temp.bat
+
+# Assembly JARs (keep source, ignore built JARs)
+target/scala-*/cs441-hw3-graphrag-assembly-*.jar
+target/scala-*/cs441-hw3-graphrag_*.jar
+
+# Keep essential deployment JARs if needed
+!deploy/*.jar

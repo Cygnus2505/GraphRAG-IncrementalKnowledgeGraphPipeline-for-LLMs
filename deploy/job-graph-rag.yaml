@@ -1,0 +1,197 @@
+apiVersion: flink.apache.org/v1beta1
+kind: FlinkDeployment
+metadata:
+  name: graphrag-pipeline
+  namespace: flink
+  labels:
+    app: graphrag
+    environment: production
+spec:
+  # Docker image with Flink runtime + your application JAR
+  image: 405721655991.dkr.ecr.us-east-1.amazonaws.com/graphrag-flink:latest
+  imagePullPolicy: Always
+  
+  # Flink version - must match your Flink dependencies (1.20.0)
+  flinkVersion: v1_20
+  
+  # Service account for RBAC permissions and IRSA
+  serviceAccount: flink
+  
+  # Flink configuration overrides
+  flinkConfiguration:
+    # Task slots per TaskManager
+    taskmanager.numberOfTaskSlots: "4"
+    
+    # Parallelism
+    parallelism.default: "4"
+    
+    # State backend
+    state.backend: "rocksdb"
+    state.backend.incremental: "true"
+    state.checkpoints.dir: "s3://graphrag-chunks/checkpoints"
+    state.savepoints.dir: "s3://graphrag-chunks/savepoints"
+    
+    # Checkpointing configuration
+    execution.checkpointing.interval: "60000"
+    execution.checkpointing.mode: "EXACTLY_ONCE"
+    execution.checkpointing.timeout: "600000"
+    execution.checkpointing.max-concurrent-checkpoints: "1"
+    execution.checkpointing.externalized-checkpoint-retention: "RETAIN_ON_CANCELLATION"
+    
+    # Restart strategy
+    restart-strategy.type: "fixed-delay"
+    restart-strategy.fixed-delay.attempts: "3"
+    restart-strategy.fixed-delay.delay: "10s"
+    
+    # Classloader
+    classloader.resolve-order: "child-first"
+    
+    # Web UI
+    web.submit.enable: "true"
+    web.cancel.enable: "true"
+    
+    # High availability
+    high-availability.type: "kubernetes"
+    high-availability.storageDir: "s3://graphrag-chunks/flink-ha"
+  
+  # JobManager resource configuration
+  jobManager:
+    resource:
+      memory: "1024m"
+      cpu: 0.5
+    replicas: 1
+    # Pod template for JobManager
+    podTemplate:
+      apiVersion: v1
+      kind: Pod
+      metadata:
+        name: pod-template-jobmanager
+        labels:
+          app: graphrag
+          component: jobmanager
+        annotations:
+          # IRSA annotation for S3 access
+          eks.amazonaws.com/role-arn: "arn:aws:iam::405721655991:role/FlinkS3AccessRole"
+      spec:
+        serviceAccountName: flink
+        hostNetwork: true
+        dnsPolicy: ClusterFirstWithHostNet
+        containers:
+        - name: flink-main-container
+          env:
+          # Neo4j configuration
+          - name: NEO4J_URI
+            valueFrom:
+              configMapKeyRef:
+                name: graphrag-config
+                key: neo4j.uri
+          - name: NEO4J_USER
+            valueFrom:
+              configMapKeyRef:
+                name: graphrag-config
+                key: neo4j.user
+          - name: NEO4J_DATABASE
+            valueFrom:
+              configMapKeyRef:
+                name: graphrag-config
+                key: neo4j.database
+          - name: NEO4J_PASS
+            valueFrom:
+              secretKeyRef:
+                name: neo4j-credentials
+                key: password
+          
+          # Ollama configuration (via service or localhost with hostNetwork)
+          - name: OLLAMA_ENDPOINT
+            value: "http://ollama.flink.svc.cluster.local:11434"
+          
+          # AWS configuration
+          - name: AWS_REGION
+            value: "us-east-1"
+          - name: AWS_DEFAULT_REGION
+            value: "us-east-1"
+  
+  # TaskManager resource configuration
+  taskManager:
+    resource:
+      memory: "1024m"
+      cpu: 0.5
+    replicas: 1
+    # Pod template for TaskManager
+    podTemplate:
+      apiVersion: v1
+      kind: Pod
+      metadata:
+        name: pod-template-taskmanager
+        labels:
+          app: graphrag
+          component: taskmanager
+        annotations:
+          # IRSA annotation for S3 access
+          eks.amazonaws.com/role-arn: "arn:aws:iam::405721655991:role/FlinkS3AccessRole"
+      spec:
+        serviceAccountName: flink
+        hostNetwork: true
+        dnsPolicy: ClusterFirstWithHostNet
+        containers:
+        - name: flink-main-container
+          env:
+          # Neo4j configuration
+          - name: NEO4J_URI
+            valueFrom:
+              configMapKeyRef:
+                name: graphrag-config
+                key: neo4j.uri
+          - name: NEO4J_USER
+            valueFrom:
+              configMapKeyRef:
+                name: graphrag-config
+                key: neo4j.user
+          - name: NEO4J_DATABASE
+            valueFrom:
+              configMapKeyRef:
+                name: graphrag-config
+                key: neo4j.database
+          - name: NEO4J_PASS
+            valueFrom:
+              secretKeyRef:
+                name: neo4j-credentials
+                key: password
+          
+          # Ollama configuration (via service or localhost with hostNetwork)
+          - name: OLLAMA_ENDPOINT
+            value: "http://ollama.flink.svc.cluster.local:11434"
+          
+          # AWS configuration
+          - name: AWS_REGION
+            value: "us-east-1"
+          - name: AWS_DEFAULT_REGION
+            value: "us-east-1"
+  
+  # Job specification
+  job:
+    # Path to your JAR inside the container
+    jarURI: "local:///opt/flink/usrlib/graphrag-job.jar"
+    
+    # Main class to execute
+    entryClass: "graphrag.GraphRagJob"
+    
+    # Job arguments
+    args:
+      - "--input"
+      - "s3://graphrag-chunks/chunks/"
+    
+    # Job parallelism
+    parallelism: 2
+    
+    # Upgrade mode
+    upgradeMode: stateless
+    
+    # Desired state of the job
+    state: running
+    
+    # Allow non-restored state
+    allowNonRestoredState: true
+  
+  # Mode: native is recommended for operator deployments
+  mode: native

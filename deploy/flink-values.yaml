@@ -1,0 +1,36 @@
+# Helm values for Flink Kubernetes Operator
+# This configures the operator itself, not the Flink applications
+
+operator:
+  # Operator configuration
+  watchNamespaces: ["flink", "default"]
+  
+  # Resource limits for the operator
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+# Flink operator image
+image:
+  repository: flink-kubernetes-operator
+  tag: "1.6.0"
+  pullPolicy: IfNotPresent
+
+# Service account for the operator
+serviceAccount:
+  create: true
+  name: flink-kubernetes-operator
+
+# RBAC configuration
+rbac:
+  create: true
+
+# Metrics configuration (optional)
+metrics:
+  enabled: false
+
+

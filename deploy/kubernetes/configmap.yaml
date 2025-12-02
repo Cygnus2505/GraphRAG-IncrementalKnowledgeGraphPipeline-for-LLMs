@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: graphrag-config
+  namespace: graphrag
+data:
+  # Neo4j Aura Configuration
+  neo4j.uri: "neo4j+s://e86ce959.databases.neo4j.io"
+  neo4j.user: "neo4j"
+  neo4j.database: "neo4j"
+  
+  # API Server Configuration
+  api.server.host: "0.0.0.0"
+  api.server.port: "8080"
+  
+  # Application Configuration
+  application.name: "GraphRAG REST API"
+  application.version: "1.0.0"
+
+
+
+

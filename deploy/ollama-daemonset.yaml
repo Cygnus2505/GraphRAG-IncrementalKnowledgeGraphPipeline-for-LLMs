@@ -1,0 +1,202 @@
+################################################################################
+# Ollama DaemonSet - Installs and runs Ollama on every node
+# This DaemonSet uses an Ubuntu image to run the official install script
+# on each node, mounts the host path /var/lib/ollama so models persist,
+# and runs Ollama in the container foreground so the Pod serves on the
+# node's localhost (hostNetwork: true + hostPort: 11434).
+################################################################################
+
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: ollama
+  namespace: flink
+  labels:
+    app: ollama
+spec:
+  selector:
+    matchLabels:
+      app: ollama
+  template:
+    metadata:
+      labels:
+        app: ollama
+    spec:
+      # Run in host network so pods on the same node can talk to localhost:11434
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      # Run as root so install script can write to the mounted hostPath
+      containers:
+      - name: ollama-installer
+        image: ubuntu:22.04
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          runAsUser: 0
+          runAsGroup: 0
+          privileged: false
+        # Command: install prerequisites, run installer, then start ollama in foreground
+        command: ["/bin/bash", "-c"]
+        args:
+        - |
+          set -euo pipefail
+          # ensure apt & curl exist
+          apt-get update -y && apt-get install -y --no-install-recommends ca-certificates curl gnupg2 ca-certificates lsb-release \
+            && rm -rf /var/lib/apt/lists/* || true
+          echo "==> Running ollama install script"
+          # Run official install script; it installs /usr/bin/ollama into the container
+          curl -fsSL https://ollama.com/install.sh | sh || { echo "install script failed"; sleep 10; }
+          # Ensure the host-mounted data dir exists and is writable
+          mkdir -p /var/lib/ollama
+          chown -R root:root /var/lib/ollama || true
+          echo "==> Starting ollama server (foreground). Logs follow =="
+          # Set environment for models dir
+          export OLLAMA_MODELS=/var/lib/ollama
+          export OLLAMA_HOST=0.0.0.0:11434
+          export OLLAMA_ORIGINS='*'
+          export OLLAMA_KEEP_ALIVE='10m'
+          # Start ollama in foreground so the container stays up
+          ollama serve || ollama || { echo "failed to start ollama"; sleep 300; exit 1; }
+        env:
+        - name: OLLAMA_HOST
+          value: "0.0.0.0:11434"
+        - name: OLLAMA_MODELS
+          value: "/var/lib/ollama"
+        - name: OLLAMA_ORIGINS
+          value: "*"
+        - name: OLLAMA_KEEP_ALIVE
+          value: "10m"
+        ports:
+        - name: http
+          containerPort: 11434
+          hostPort: 11434
+          protocol: TCP
+        volumeMounts:
+        - name: ollama-data
+          mountPath: /var/lib/ollama
+        resources:
+          requests:
+            cpu: "0.5"
+            memory: "8Gi"
+          limits:
+            cpu: "2"
+            memory: "28Gi"
+        # Liveness / readiness that hit the local API
+        livenessProbe:
+          httpGet:
+            path: "/api/tags"
+            port: 11434
+          initialDelaySeconds: 30
+          periodSeconds: 20
+          timeoutSeconds: 5
+          failureThreshold: 6
+        readinessProbe:
+          httpGet:
+            path: "/api/tags"
+            port: 11434
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+      volumes:
+      - name: ollama-data
+        hostPath:
+          path: /var/lib/ollama
+          type: DirectoryOrCreate
+      tolerations:
+      - effect: NoSchedule
+        operator: Exists
+
+---
+# ClusterIP service to allow in-cluster DNS access
+apiVersion: v1
+kind: Service
+metadata:
+  name: ollama
+  namespace: flink
+  labels:
+    app: ollama
+spec:
+  selector:
+    app: ollama
+  ports:
+  - name: http
+    port: 11434
+    targetPort: 11434
+    protocol: TCP
+  type: ClusterIP
+
+---
+# DaemonSet to pull models on every node and persist them into /var/lib/ollama
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: ollama-model-puller
+  namespace: flink
+  labels:
+    app: ollama-model-puller
+spec:
+  selector:
+    matchLabels:
+      app: ollama-model-puller
+  template:
+    metadata:
+      labels:
+        app: ollama-model-puller
+    spec:
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      containers:
+      - name: model-puller
+        image: ubuntu:22.04
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          runAsUser: 0
+        command: ["/bin/bash", "-c"]
+        args:
+        - |
+          set -euo pipefail
+          apt-get update -y && apt-get install -y --no-install-recommends ca-certificates curl gnupg2 lsb-release \
+            && rm -rf /var/lib/apt/lists/* || true
+          echo "Waiting for local ollama to respond on 127.0.0.1:11434..."
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:11434/api/tags >/dev/null 2>&1; then
+              echo "ollama is ready"
+              break
+            fi
+            echo "waiting for ollama ($i/60)"
+            sleep 5
+          done
+          if ! curl -fsS http://127.0.0.1:11434/api/tags >/dev/null 2>&1; then
+            echo "ERROR: local ollama not responding; exiting with non-zero"
+            exit 1
+          fi
+          echo "Installing ollama client inside puller pod"
+          curl -fsSL https://ollama.com/install.sh | sh || echo "install script failed"
+          echo "Listing models before pull"
+          ollama list || true
+          # Pull models you want (add more names if needed)
+          echo "Pulling tinyllama"
+          ollama pull tinyllama || echo "pull failed"
+          echo "Final model list"
+          ollama list || true
+          # Keep the pod alive so it's visible and doesn't get restarted constantly
+          echo "Model pull complete; sleeping forever to keep DaemonSet pod alive"
+          tail -f /dev/null
+        volumeMounts:
+        - name: ollama-data
+          mountPath: /var/lib/ollama
+        resources:
+          requests:
+            cpu: "0.5"
+            memory: "8Gi"
+          limits:
+            cpu: "2"
+            memory: "28Gi"
+      volumes:
+      - name: ollama-data
+        hostPath:
+          path: /var/lib/ollama
+          type: DirectoryOrCreate
+      tolerations:
+      - effect: NoSchedule
+        operator: Exists
