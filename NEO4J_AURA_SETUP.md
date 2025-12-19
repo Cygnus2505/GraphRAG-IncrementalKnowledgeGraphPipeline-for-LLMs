@@ -33,7 +33,7 @@ AURA_INSTANCENAME=Free instance
 neo4j {
   uri = "neo4j+s://e86ce959.databases.neo4j.io"
   user = "neo4j"
-  password = "cMGY0uqeoqpi1PMEnT6zrxrXQw6Cx42iyd-ZseuODGI"
+  password = "Password"
   database = "neo4j"
 }
 ```
@@ -47,7 +47,7 @@ neo4j.database: "neo4j"
 
 #### `deploy/kubernetes/secret-template.yaml`
 ```yaml
-password: "cMGY0uqeoqpi1PMEnT6zrxrXQw6Cx42iyd-ZseuODGI"
+password: "Password"
 ```
 
 ## Testing Local Connection
@@ -57,7 +57,7 @@ password: "cMGY0uqeoqpi1PMEnT6zrxrXQw6Cx42iyd-ZseuODGI"
 ```bash
 # Set environment variables
 export NEO4J_URI="neo4j+s://e86ce959.databases.neo4j.io"
-export NEO4J_PASS="cMGY0uqeoqpi1PMEnT6zrxrXQw6Cx42iyd-ZseuODGI"
+export NEO4J_PASS="Password"
 
 # Run API server locally
 sbt "runMain graphrag.api.ApiServer"
@@ -70,7 +70,7 @@ sbt "runMain graphrag.api.ApiServer"
 # Then connect:
 cypher-shell -a neo4j+s://e86ce959.databases.neo4j.io \
   -u neo4j \
-  -p cMGY0uqeoqpi1PMEnT6zrxrXQw6Cx42iyd-ZseuODGI
+  -p "Password"
 ```
 
 ## Testing in Docker
@@ -82,7 +82,7 @@ docker build -t graphrag-api:latest .
 
 docker run -p 8080:8080 \
   -e NEO4J_URI="neo4j+s://e86ce959.databases.neo4j.io" \
-  -e NEO4J_PASS="cMGY0uqeoqpi1PMEnT6zrxrXQw6Cx42iyd-ZseuODGI" \
+  -e NEO4J_PASS="Password" \
   -e NEO4J_USER="neo4j" \
   -e NEO4J_DATABASE="neo4j" \
   graphrag-api:latest
@@ -100,7 +100,7 @@ kubectl apply -f deploy/kubernetes/configmap.yaml
 
 ```bash
 kubectl create secret generic neo4j-credentials \
-  --from-literal=password='cMGY0uqeoqpi1PMEnT6zrxrXQw6Cx42iyd-ZseuODGI' \
+  --from-literal=password='Password' \
   --namespace=graphrag \
   --dry-run=client -o yaml | kubectl apply -f -
 ```
