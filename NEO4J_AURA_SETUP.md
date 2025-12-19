@@ -9,7 +9,7 @@ This project is now configured to use **Neo4j Aura** (cloud-hosted Neo4j) instea
 ```
 NEO4J_URI=neo4j+s://e86ce959.databases.neo4j.io
 NEO4J_USERNAME=neo4j
-NEO4J_PASSWORD=cMGY0uqeoqpi1PMEnT6zrxrXQw6Cx42iyd-ZseuODGI
+NEO4J_PASSWORD="Password"
 NEO4J_DATABASE=neo4j
 AURA_INSTANCEID=e86ce959
 AURA_INSTANCENAME=Free instance
