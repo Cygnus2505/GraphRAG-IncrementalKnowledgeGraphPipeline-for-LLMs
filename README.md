@@ -2,11 +2,11 @@
 
 A comprehensive GraphRAG (Graph Retrieval-Augmented Generation) system that extracts knowledge from research papers, builds a knowledge graph in Neo4j, and exposes it through a REST API for semantic search and exploration.
 
-## 🎥 Video Demonstration
+##  Video Demonstration
 
 Watch the running implementation: [YouTube Video](https://youtu.be/utOL2YcOrVs)
 
-## 📋 Table of Contents
+##  Table of Contents
 
 - [Overview](#overview)
 - [Architecture](#architecture)
@@ -20,7 +20,7 @@ Watch the running implementation: [YouTube Video](https://youtu.be/utOL2YcOrVs)
 
 ---
 
-## 🎯 Overview
+##  Overview
 
 This system implements a complete GraphRAG pipeline that:
 
@@ -32,16 +32,16 @@ This system implements a complete GraphRAG pipeline that:
 
 ### Key Features
 
-- ✅ **Scalable Processing**: Apache Flink for distributed stream processing
-- ✅ **LLM Integration**: Ollama with TinyLlama for relationship scoring
-- ✅ **Graph Database**: Neo4j for efficient graph storage and traversal
-- ✅ **REST API**: Akka HTTP server with 8 comprehensive endpoints
-- ✅ **Provenance Tracking**: Full traceability from concepts to source text
-- ✅ **Cloud Ready**: Deployable on AWS EKS with S3 integration
+- **Scalable Processing**: Apache Flink for distributed stream processing
+- **LLM Integration**: Ollama with TinyLlama for relationship scoring
+- **Graph Database**: Neo4j for efficient graph storage and traversal
+- **REST API**: Akka HTTP server with 8 comprehensive endpoints
+- **Provenance Tracking**: Full traceability from concepts to source text
+- **Cloud Ready**: Deployable on AWS EKS with S3 integration
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -103,7 +103,7 @@ This system implements a complete GraphRAG pipeline that:
 
 ---
 
-## 📦 Prerequisites
+##  Prerequisites
 
 ### For Local Development
 
@@ -179,7 +179,7 @@ ollama pull tinyllama
 
 ---
 
-## 🚀 Local Setup
+##  Local Setup
 
 ### Step 1: Clone and Build
 
@@ -516,7 +516,7 @@ kubectl exec -n flink <flink-pod> -- curl http://neo4j-service:7474
 
 ---
 
-## 📡 REST API Usage
+##  REST API Usage
 
 ### Base URL
 - **Local**: `http://localhost:8080`
@@ -596,7 +596,7 @@ See [API_ENDPOINTS_QUICK_REFERENCE.md](API_ENDPOINTS_QUICK_REFERENCE.md) for det
 
 ---
 
-## ⚙️ Configuration
+##  Configuration
 
 ### Application Configuration (`src/main/resources/application.conf`)
 
@@ -659,7 +659,7 @@ See `deploy/job-graph-rag.yaml` for Flink deployment configuration.
 
 ---
 
-## 🔧 Troubleshooting
+##  Troubleshooting
 
 ### Local Issues
 
@@ -775,7 +775,7 @@ ollama.timeout-ms = 60000
 
 ---
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 cs441-hw3-rag/
@@ -810,7 +810,7 @@ cs441-hw3-rag/
 
 ---
 
-## 📚 Additional Documentation
+##  Additional Documentation
 
 - [API Endpoints Quick Reference](API_ENDPOINTS_QUICK_REFERENCE.md)
 - [Complete Workflow Guide](COMPLETE_WORKFLOW.md)
@@ -819,7 +819,7 @@ cs441-hw3-rag/
 
 ---
 
-## 🎓 Key Concepts
+##  Key Concepts
 
 ### Concept Extraction
 - **NER**: Named Entity Recognition using Stanford CoreNLP
@@ -838,19 +838,19 @@ cs441-hw3-rag/
 
 ---
 
-## 🤝 Contributing
+##  Contributing
 
 This is a homework project for CS441. For questions or issues, please refer to the course materials or contact the instructor.
 
 ---
 
-## 📄 License
+##  License
 
 This project is part of CS441 coursework.
 
 ---
 
-## 🙏 Acknowledgments
+##  Acknowledgments
 
 - Apache Flink for stream processing
 - Neo4j for graph database
